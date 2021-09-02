@@ -16,7 +16,7 @@ public class fipsUtils {
 		//		.setEntropyBitsRequired(128);
 		 .setSecurityStrength(256)
 		 .setEntropyBitsRequired(256);
-		return drgbBldr.build(Strings.toByteArray("number only used once"), false);
+		return drgbBldr.build(Strings.toByteArray("I love kate lam"), false);
 	}
 	
 	private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();

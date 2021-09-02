@@ -24,6 +24,15 @@ public class guess {
 		Long[] nSpread = LoadStats(args[0]);
 		Long[] nSpreadMega = LoadStats(args[1]);
 		
+		Long[] nCnt = new Long[nSpread.length];
+		Long[] nCntMega = new Long[nSpreadMega.length];
+		for (int i=0; i<nCnt.length; i++)
+			nCnt[i] = 0L;
+		for (int i=0; i<nCntMega.length; i++)
+			nCntMega[i] = 0L;
+		
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		
 //		Path stats = Paths.get(args[0]);
 //		System.out.printf("File: %s\n", stats.toAbsolutePath().toString());
 //		List<String[]> collect = Files.lines(stats.toAbsolutePath())
@@ -58,14 +67,24 @@ public class guess {
 //		}
 //		
 		Integer byteSpread = 3;
-		for (int k=0; k<10000000; k++) {
+		for (int k=0; k<100000; k++) {
+			// pick plays
 			System.out.printf("%3d: ", k);
 			List<Integer> nums = PickNums(byteSpread, nSpread, 5);
 			Collections.sort(nums);
 			for (int i=0; i<nums.size(); i++)
-				System.out.printf("%3d, ", nums.get(i));
-			List<Integer> numsMega = PickNums(byteSpread, nSpread, 1);
-			System.out.printf("%6d\n", numsMega.get(0));
+				System.out.printf("%3d, ", nums.get(i)+1);
+			List<Integer> numsMega = PickNums(byteSpread, nSpreadMega, 1);
+			System.out.printf("%6d\n", numsMega.get(0)+1);
+			
+			// record cnts
+			for (Integer num: nums)
+				nCnt[num]++;
+			nCntMega[numsMega.get(0)]++;
+			
+			// display
+			if (k % 10000 == 9999)
+				PrintStats(nCnt, nCntMega);
 		}
 		
 		// 3: Prepare a round of 5 picks and a power ball
@@ -81,10 +100,45 @@ public class guess {
 //		}
 		
 		// 4: Tally stats and show the preferred picks
-		
+		PrintStats(nCnt, nCntMega);
+
 		System.out.print("\nDone");
 	}
 
+	private static void PrintStats(Long[] nCnt, Long[] nCntMega)  {
+		// java.awt.Toolkit.getDefaultToolkit().beep();
+		System.err.print("\nBalls:\n");
+		for (int i=0; i<nCnt.length; i++)  {
+			System.err.printf("%3d-%5d, ", i+1,nCnt[i]);
+			if (i % 10 == 9)
+				System.err.printf("\n");
+		}
+		System.err.print("\nMega Ball:\n");
+		for (int i=0; i<nCntMega.length; i++)  {
+			System.err.printf("%3d-%5d, ", i+1,nCntMega[i]);
+			if (i % 10 == 9)
+				System.err.printf("\n");
+		}
+	}
+	
+	private static List<Integer[]> LoadPatterns(String file) throws IOException {
+		// need to load the original file for patterns
+		Path stats = Paths.get(file);
+		System.out.printf("File: %s\n", stats.toAbsolutePath().toString());
+		List<String[]> collect = Files.lines(stats.toAbsolutePath())
+				.map(line -> line.split(", "))
+				.collect(Collectors.toList());
+		Integer[] nCnt = new Integer[collect.size()];
+		List<Integer[]> ret = new ArrayList<Integer[]>();
+		for (int i=0; i<collect.size(); i++) {
+			String[] s = collect.get(i);
+			Integer ball = Integer.parseInt(s[0].trim());
+			Integer iterations = Integer.parseInt(s[1].trim());
+			nCnt[ball-1] = iterations;
+		}
+		return new ArrayList<Integer[]>();
+	}
+		
 	private static Long[] LoadStats(String file) throws IOException {
 		Path stats = Paths.get(file);
 		System.out.printf("File: %s\n", stats.toAbsolutePath().toString());
@@ -118,18 +172,16 @@ public class guess {
 			nSpread[i] = width;
 			System.out.printf("Spread[%d]: %d\n", i,nSpread[i]);
 		}
-		
 		return nSpread;
 	}
 	
-	private static <Integer> List<Integer> PickNums(Integer byteSpread, Long[] nSpread, int nPicks) {
+	private static List<Integer> PickNums(Integer byteSpread, Long[] nSpread, int nPicks) {
 		SecureRandom r = fipsUtils.buildDrbg();
 		byte[] b = new byte[(int)byteSpread];
 		List<Integer> picks = new ArrayList<>();
 		while (picks.size() < nPicks) {
 			r.nextBytes(b);
 			Long spreadValue = fipsUtils.bytesToLong(b);
-			@SuppressWarnings("unchecked")
 			Integer newIndex = ((Integer)fipsUtils.spreadToIndex(nSpread, spreadValue));
 			if (!picks.contains(newIndex))
 				picks.add(newIndex);
