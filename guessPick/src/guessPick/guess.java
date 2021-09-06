@@ -1,13 +1,18 @@
 
 package guessPick;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +28,8 @@ public class guess {
 		// 1: Read CSV file for weightings
 		Long[] nSpread = LoadStats(args[0]);
 		Long[] nSpreadMega = LoadStats(args[1]);
+		Long nIncrement = Long.valueOf(args[2]);
+		Long nTotal = Long.valueOf(args[3]);
 		
 		Long[] nCnt = new Long[nSpread.length];
 		Long[] nCntMega = new Long[nSpreadMega.length];
@@ -67,15 +74,33 @@ public class guess {
 //		}
 //		
 		Integer byteSpread = 3;
-		for (int k=0; k<100000; k++) {
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyymmdd-HHmmss");
+		String fnBase = String.format("%s",  dtf.format(LocalDateTime.now()));
+		String fnPath = String.format("%s/%s", System.getProperty("user.dir"),fnBase);
+		File theDir = new File(fnPath);
+		if (!theDir.exists())
+			theDir.mkdirs();
+		String fn =  null;
+		FileWriter  writer = null;
+		PrintWriter printWriter = null;
+		for (long k=0; k<nTotal; k++) {
+			if (k % nIncrement == 0 || writer == null || printWriter == null)  {
+				if (writer != null || printWriter != null) {
+					printWriter.close();
+				}
+				fn = String.format("%s/%s-%010d.txt", fnPath,fnBase, k / nIncrement);
+				System.out.printf("Writing [%s]\n", fn);
+				writer = new FileWriter(fn);
+				printWriter = new PrintWriter(writer);
+			}
 			// pick plays
-			System.out.printf("%3d: ", k);
+			printWriter.printf("%3d: ", k);
 			List<Integer> nums = PickNums(byteSpread, nSpread, 5);
 			Collections.sort(nums);
 			for (int i=0; i<nums.size(); i++)
-				System.out.printf("%3d, ", nums.get(i)+1);
+				printWriter.printf("%3d, ", nums.get(i)+1);
 			List<Integer> numsMega = PickNums(byteSpread, nSpreadMega, 1);
-			System.out.printf("%6d\n", numsMega.get(0)+1);
+			printWriter.printf("%6d\n", numsMega.get(0)+1);
 			
 			// record cnts
 			for (Integer num: nums)
@@ -83,8 +108,8 @@ public class guess {
 			nCntMega[numsMega.get(0)]++;
 			
 			// display
-			if (k % 10000 == 9999)
-				PrintStats(nCnt, nCntMega);
+//			if (k % 10000 == 9999)
+//				PrintStats(nCnt, nCntMega);
 		}
 		
 		// 3: Prepare a round of 5 picks and a power ball
@@ -121,23 +146,23 @@ public class guess {
 		}
 	}
 	
-	private static List<Integer[]> LoadPatterns(String file) throws IOException {
-		// need to load the original file for patterns
-		Path stats = Paths.get(file);
-		System.out.printf("File: %s\n", stats.toAbsolutePath().toString());
-		List<String[]> collect = Files.lines(stats.toAbsolutePath())
-				.map(line -> line.split(", "))
-				.collect(Collectors.toList());
-		Integer[] nCnt = new Integer[collect.size()];
-		List<Integer[]> ret = new ArrayList<Integer[]>();
-		for (int i=0; i<collect.size(); i++) {
-			String[] s = collect.get(i);
-			Integer ball = Integer.parseInt(s[0].trim());
-			Integer iterations = Integer.parseInt(s[1].trim());
-			nCnt[ball-1] = iterations;
-		}
-		return new ArrayList<Integer[]>();
-	}
+//	private static List<Integer[]> LoadPatterns(String file) throws IOException {
+//		// need to load the original file for patterns
+//		Path stats = Paths.get(file);
+//		System.out.printf("File: %s\n", stats.toAbsolutePath().toString());
+//		List<String[]> collect = Files.lines(stats.toAbsolutePath())
+//				.map(line -> line.split(", "))
+//				.collect(Collectors.toList());
+//		Integer[] nCnt = new Integer[collect.size()];
+//		List<Integer[]> ret = new ArrayList<Integer[]>();
+//		for (int i=0; i<collect.size(); i++) {
+//			String[] s = collect.get(i);
+//			Integer ball = Integer.parseInt(s[0].trim());
+//			Integer iterations = Integer.parseInt(s[1].trim());
+//			nCnt[ball-1] = iterations;
+//		}
+//		return new ArrayList<Integer[]>();
+//	}
 		
 	private static Long[] LoadStats(String file) throws IOException {
 		Path stats = Paths.get(file);
