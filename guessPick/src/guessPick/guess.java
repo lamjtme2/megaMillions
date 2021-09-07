@@ -76,8 +76,9 @@ public class guess {
 		Integer byteSpread = 3;
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyymmdd-HHmmss");
 		String fnBase = String.format("%s",  dtf.format(LocalDateTime.now()));
-		String fnPath = String.format("%s/%s", System.getProperty("user.dir"),fnBase);
-		File theDir = new File(fnPath);
+		String fnTemp = String.format("%s/out/%s/temp", System.getProperty("user.dir"),fnBase);
+		String fnPath = String.format("%s/out/%s", System.getProperty("user.dir"),fnBase);
+				File theDir = new File(fnPath);
 		if (!theDir.exists())
 			theDir.mkdirs();
 		String fn =  null;
@@ -87,10 +88,17 @@ public class guess {
 			if (k % nIncrement == 0 || writer == null || printWriter == null)  {
 				if (writer != null || printWriter != null) {
 					printWriter.close();
+					File f_old = new File(fnTemp);
+					File f_new = new File(fn);
+					if (f_old.renameTo(f_new))
+						System.out.printf("Writing [%s]\n", fn);
+					else {
+						System.out.printf("Failed to rename to [%s]\n",  fn);
+						throw new IOException("can't rename");
+					}
 				}
 				fn = String.format("%s/%s-%010d.txt", fnPath,fnBase, k / nIncrement);
-				System.out.printf("Writing [%s]\n", fn);
-				writer = new FileWriter(fn);
+				writer = new FileWriter(fnTemp);
 				printWriter = new PrintWriter(writer);
 			}
 			// pick plays
@@ -111,7 +119,11 @@ public class guess {
 //			if (k % 10000 == 9999)
 //				PrintStats(nCnt, nCntMega);
 		}
-		
+		printWriter.close();
+		File f_old = new File(fnTemp);
+		File f_new = new File(fn);
+		f_old.renameTo(f_new);
+
 		// 3: Prepare a round of 5 picks and a power ball
 //		SecureRandom r = fipsUtils.buildDrbg();
 //		byte[] b = new byte[byteSpread];
@@ -124,6 +136,7 @@ public class guess {
 //			System.out.printf(": %s, %d -> %d\n", fipsUtils.bytesToHex(b), spreadValue, fipsUtils.spreadToIndex(nSpread, spreadValue));
 //		}
 		
+			
 		// 4: Tally stats and show the preferred picks
 		PrintStats(nCnt, nCntMega);
 
