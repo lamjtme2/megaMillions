@@ -63,9 +63,11 @@ public class guessPerpetual {
 				// for every historical record row
 				rowMatch = 0;
 				for (int j=0; j<5; j++) {
-					// for every historical column
-					if (nums.get(j) == last[h][j])
-						rowMatch++;
+					// for every guessed column
+					for (int n=0;n<5;n++)
+						// against every historical column
+						if (nums.get(j) == last[h][n])
+							rowMatch++;
 				}
 				if (mb.get(0) == last[h][5])
 					rowMatch++;
