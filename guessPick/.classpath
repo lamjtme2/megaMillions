@@ -7,6 +7,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/bouncycastle_fips_lib_debug"/>
-	<classpathentry kind="lib" path="/home/jlam/git/megaMillions/libs/bc-fips-debug-1.0.2.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/bc_fips"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
